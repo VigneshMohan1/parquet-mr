@@ -143,7 +143,9 @@ public class ParquetFileWriter {
 
   private STATE state = STATE.NOT_STARTED;
 
-  /**
+  private final CodecFactory codecFactory;
+
+/**
    *
    * @param schema the schema of the data
    * @param out the file to write to
@@ -155,6 +157,7 @@ public class ParquetFileWriter {
     this.schema = schema;
     FileSystem fs = file.getFileSystem(configuration);
     this.out = fs.create(file, false);
+    this.codecFactory = new CodecFactory(configuration);
   }
 
   /**
@@ -379,6 +382,7 @@ public class ParquetFileWriter {
     ParquetMetadata footer = new ParquetMetadata(new FileMetaData(schema, extraMetaData, Version.FULL_VERSION), blocks);
     serializeFooter(footer, out);
     out.close();
+    codecFactory.release();
   }
 
   private static void serializeFooter(ParquetMetadata footer, FSDataOutputStream out) throws IOException {
@@ -443,6 +447,13 @@ public class ParquetFileWriter {
    */
   public long getPos() throws IOException {
     return out.getPos();
+  }
+  
+  /**
+   * @return the code factory which should be used to get compressors
+   */  
+  public CodecFactory getCodecFactory() {
+	return codecFactory;
   }
 
   /**
