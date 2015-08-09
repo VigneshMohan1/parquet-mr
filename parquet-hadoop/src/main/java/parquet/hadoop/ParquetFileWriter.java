@@ -145,7 +145,7 @@ public class ParquetFileWriter {
 
   private final CodecFactory codecFactory;
 
-/**
+  /**
    *
    * @param schema the schema of the data
    * @param out the file to write to
@@ -450,7 +450,7 @@ public class ParquetFileWriter {
   }
   
   /**
-   * @return the code factory which should be used to get compressors
+   * @return The codec factory which should be used to get compressors
    */  
   public CodecFactory getCodecFactory() {
 	return codecFactory;
