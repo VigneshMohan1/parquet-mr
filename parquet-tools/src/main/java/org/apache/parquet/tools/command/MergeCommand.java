@@ -78,6 +78,24 @@ public class MergeCommand extends ArgsOnlyCommand {
     writer.end(mergedMeta.getKeyValueMetaData());
   }
 
+  public void execute(List<String> inputFileList,String ouptutFileName) throws Exception{
+
+    List<Path> inputFiles = getInputFiles(inputFileList);
+    // Merge schema and extraMeta
+    FileMetaData mergedMeta = mergedMetadata(inputFiles);
+
+    Path outputFile = new Path(ouptutFileName);
+
+    // Merge data
+    ParquetFileWriter writer = new ParquetFileWriter(conf,
+            mergedMeta.getSchema(), outputFile, ParquetFileWriter.Mode.CREATE);
+    writer.start();
+    for (Path input: inputFiles) {
+      writer.appendFile(conf, input);
+    }
+    writer.end(mergedMeta.getKeyValueMetaData());
+  }
+
   private FileMetaData mergedMetadata(List<Path> inputFiles) throws IOException {
     return ParquetFileWriter.mergeMetadataFiles(inputFiles, conf).getFileMetaData();
   }
