@@ -40,6 +40,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import org.apache.parquet.Preconditions;
 import org.apache.parquet.Strings;
 import org.apache.parquet.Version;
 import org.apache.parquet.bytes.BytesInput;
@@ -873,5 +874,26 @@ public class ParquetFileWriter {
     protected boolean isPaddingNeeded(long remaining) {
       return (remaining <= maxPaddingSize);
     }
+  }
+
+  /**
+   * Given a list of metadata files, merge them into a single ParquetMetadata
+   * Requires that the schemas be compatible, and the extraMetadata be exactly equal.
+   */
+  public static ParquetMetadata mergeMetadataFiles(List<Path> files,  Configuration conf) throws IOException {
+    Preconditions.checkArgument(!files.isEmpty(), "Cannot merge an empty list of metadata");
+
+    GlobalMetaData globalMetaData = null;
+    List<BlockMetaData> blocks = new ArrayList<BlockMetaData>();
+
+    for (Path p : files) {
+      ParquetMetadata pmd = ParquetFileReader.readFooter(conf, p, ParquetMetadataConverter.NO_FILTER);
+      FileMetaData fmd = pmd.getFileMetaData();
+      globalMetaData = mergeInto(fmd, globalMetaData, true);
+      blocks.addAll(pmd.getBlocks());
+    }
+
+    // collapse GlobalMetaData into a single FileMetaData, which will throw if they are not compatible
+    return new ParquetMetadata(globalMetaData.merge(), blocks);
   }
 }
